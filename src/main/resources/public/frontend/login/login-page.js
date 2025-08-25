@@ -11,12 +11,16 @@ const BASE_URL = "http://localhost:8081"; // backend URL
  * - login button
  * - logout button (optional, for token testing)
  */
+const usernameInput = document.getElementById("login-input");
+const passwordInput = document.getElementById("password-input");
+const loginButton = document.getElementById("login-button");
+const logoutButton = document.getElementById("logout-button");
 
 /* 
  * TODO: Add click event listener to login button
  * - Call processLogin on click
  */
-
+loginButton.addEventListener("click", processLogin);
 
 /**
  * TODO: Process Login Function
@@ -42,8 +46,19 @@ const BASE_URL = "http://localhost:8081"; // backend URL
 async function processLogin() {
     // TODO: Retrieve username and password from input fields
     // - Trim input and validate that neither is empty
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    if (!username || !password) {
+        alert("Please enter both username and password.");
+        return;
+    }
 
     // TODO: Create a requestBody object with username and password
+    const requestBody = {
+        username,
+        password
+    };
 
     const requestOptions = {
         method: "POST",
@@ -62,6 +77,7 @@ async function processLogin() {
 
     try {
         // TODO: Send POST request to http://localhost:8081/login using fetch with requestOptions
+        const response = await fetch(`${BASE_URL}/login`, requestOptions);
 
         // TODO: If response status is 200
         // - Read the response as text
@@ -80,9 +96,30 @@ async function processLogin() {
         // TODO: For any other status code
         // - Alert the user with a generic error like "Unknown issue!"
 
+        if (response.status === 200) {
+            const responseText = await response.text(); // "token123 true"
+            const [token, isAdmin] = responseText.split(" ");
+
+            sessionStorage.setItem("auth-token", token);
+            sessionStorage.setItem("is-admin", isAdmin);
+
+            // Optional: show logout button if testing
+            if (logoutButton) logoutButton.style.display = "inline";
+
+            setTimeout(() => {
+                window.location.href = "../recipe/recipe-page.html";
+            }, 500);
+        } else if (response.status === 401) {
+            alert("Incorrect login!");
+        } else {
+            alert("Unknown issue occurred during login.");
+        }
+
     } catch (error) {
         // TODO: Handle any network or unexpected errors
         // - Log the error and alert the user
+        console.error("Login error:", error);
+        alert("An error occurred while attempting to log in.");
     }
 }
 
